@@ -1,0 +1,12 @@
+# Node modules
+quiz_node/node_modules
+quiz_react/node_modules
+
+# Build files
+quiz_react/build
+
+# Logs
+*.log
+
+# Environment files
+*.env

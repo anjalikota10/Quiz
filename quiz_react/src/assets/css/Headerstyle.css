@@ -1,0 +1,27 @@
+.mainhead {
+  margin: 0;
+  margin-bottom: -10px;
+  padding-top: 40px;
+  height: 130px;
+  padding-left: 150px;
+  width: auto;
+  background-image:linear-gradient(rgb(255, 255, 255),#6c4ce04a,#00eeffcb,white);
+
+/* 
+  Gradient background
+  background: linear-gradient(270deg, white, #6c4ce04a, #00eeffcb, white);
+  background-size: 600% 600%;
+  animation: gradientShift 15s ease infinite;
+}@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; } */
+}
+
+.mainhead h1 {
+  bottom: 5%;
+  left: 5%;
+  color: #0f65d7;
+  font-family: 'Castellar', serif;
+  text-align: left;
+}

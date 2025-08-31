@@ -1,0 +1,8 @@
+.main_foot{
+    text-align: center;
+    background-image:linear-gradient(rgb(255, 255, 255),#6c4ce04a,#00eeffcb,#0f65d7);
+    width: auto;
+    color: rgb(0, 0, 0);
+    padding-top: 30px;
+    height: 100px;
+}
