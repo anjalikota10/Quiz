@@ -15,8 +15,8 @@ pipeline {
                 '''
             }
         }
-        
-#        stage('SonarQube Analysis') {
+        #added jenkinsfile
+##   stage('SonarQube Analysis') {
  #           when {
   #              anyOf {
    #                 branch 'develop'
