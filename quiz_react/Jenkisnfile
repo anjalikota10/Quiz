@@ -16,24 +16,24 @@ pipeline {
             }
         }
         
-#        stage('SonarQube Analysis') {
- #           when {
-  #              anyOf {
-   #                 branch 'develop'
-    #            }
-     #       }
-      #      steps {
-       #         withSonarQubeEnv('SonarQube') {
-        #            sh '''
-         #               ${SCANNER_HOME}/bin/sonar-scanner \
-          #                  -Dsonar.projectKey=quiz-react-frontend \
-           #                 -Dsonar.projectName="Quiz React Frontend" \
-            #                -Dsonar.sources=src
-             #       '''
-              #  }
-               # waitForQualityGate abortPipeline: false
-           # }
-       # }
+//       stage('SonarQube Analysis') {
+ //           when {
+  //              anyOf {
+   //                 branch 'develop'
+    //            }
+     //       }
+      //      steps {
+       //         withSonarQubeEnv('SonarQube') {
+        //            sh '''
+         //               ${SCANNER_HOME}/bin/sonar-scanner \
+          //                  -Dsonar.projectKey=quiz-react-frontend \
+           //                 -Dsonar.projectName="Quiz React Frontend" \
+            //                -Dsonar.sources=src
+             //       '''
+              //  }
+               // waitForQualityGate abortPipeline: false
+           // }
+       // }
         
         stage('Deploy') {
             when {
