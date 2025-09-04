@@ -27,7 +27,7 @@ pipeline {
         //            sh '''
          //               ${SCANNER_HOME}/bin/sonar-scanner \
           //                  -Dsonar.projectKey=quiz-react-frontend \
-           //                 -Dsonar.projectName="Quiz React Frontend" \
+//           //                 -Dsonar.projectName="Quiz React Frontend" \
             //                -Dsonar.sources=src
              //       '''
               //  }
