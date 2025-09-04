@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                checkout scm
+                sh '''
+                    npm --version
+                    node --version
+                '''
+            }
+        }
+        
+#        stage('SonarQube Analysis') {
+ #           when {
+  #              anyOf {
+   #                 branch 'develop'
+    #            }
+     #       }
+      #      steps {
+       #         withSonarQubeEnv('SonarQube') {
+        #            sh '''
+         #               ${SCANNER_HOME}/bin/sonar-scanner \
+          #                  -Dsonar.projectKey=quiz-react-frontend \
+           #                 -Dsonar.projectName="Quiz React Frontend" \
+            #                -Dsonar.sources=src
+             #       '''
+              #  }
+               # waitForQualityGate abortPipeline: false
+           # }
+       # }
+        
+        stage('Deploy') {
+            when {
+                anyOf {
+                    branch 'develop'
+                }
+            }
+            steps {
+                sh '''
+                    sudo chown -R www-data:www-data /var/www/html/Quiz/quiz_react/dist
+                    sudo chmod -R 755 /var/www/html/Quiz/quiz_react/dist
+                    sudo systemctl reload nginx
+                '''
+            }
+        }
+    }
+}
