@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <>
     <div className="main_foot">
-      <p>© Designed by Vertex Technosys</p>
+      <p>© Designed by TechDevops</p>
     </div>
     </>
   )
