@@ -1,0 +1,35 @@
+.main{
+    background-image:linear-gradient(rgb(255, 255, 255),#6c4ce04a,#00eeffcb,#0f65d7);
+    height: auto;  
+      padding-top: 50px;
+    padding-bottom: 50px; 
+}
+.main .main_bgform .mainheader{
+    color: #8640ff;
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+.main .main_bgform{
+    width: 800px;
+    padding: 50px;
+    background-image:linear-gradient(rgb(255, 255, 255),rgba(108, 76, 224, 0.29),rgba(0, 238, 255, 0.795));
+      border-radius: 10px;
+      height: fit-content;
+      padding-top:20px ;
+      padding-bottom: 20px;
+}
+.main .main_bgform .main_body button{
+    width: 180px;
+    background-color: azure;
+    color: #8640ff;
+    font-size: x-large;
+    margin-top:40px;
+    
+}
+.main .main_bgform .main_body .main_content{
+    padding-top: 20px;
+    text-align: left;
+}
+.main .main_bgform .main_body .main_content .input_cont{
+    margin-top: -10px;
+}

@@ -1,0 +1,101 @@
+.mainquiz {
+  padding-top: 50px;
+  background-image: linear-gradient(rgb(255, 255, 255), #0f65d7);
+  padding-bottom: 50px;
+}
+
+.quiz-title {
+  background-image: linear-gradient(#00eeffcb, #0f65d7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  margin-bottom: 70px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.quiz-card {
+  margin: 0 auto 15px auto;
+  width: 1500px;
+  height: 300px;
+  padding: 15px;
+  box-shadow: 0px 0px 30px 10px #0f65d7, 0px 20px 460px white;
+}
+
+.question {
+  font-size: 30px;
+  /* margin-top: 15px; */
+  padding-left: 15px;
+  margin-bottom: 30px;
+}
+
+.custom-radio-group{
+  padding-left: 40px;
+}
+.custom-radio-group input[type="radio"] {
+  width: 20px;
+  margin-top: 10px;
+  height: 20px;
+  border: 3px solid #000; /* bold border */
+  accent-color: #007bff;  /* Bootstrap blue fill */
+  cursor: pointer;
+}
+
+.custom-radio-group label {
+  margin-bottom: 10px;
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.button-container button{
+  width: 300px;
+  color: #0f65d7;
+  background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #00eeffcb, #0f65d7) border-box;
+  border: 3px solid transparent;
+  border-radius: 50px;
+  text-align: center;
+  /* font-size: 30px; */
+}
+
+.already-attempted {
+  text-align: center;
+  height: 60vh;
+  margin-top: 200px;
+}
+
+.already-attempted h3{
+  margin-bottom: 100px;
+}
+
+.already-attempted button{
+  width: 300px;
+  color: #0f65d7;
+  background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #00eeffcb, #0f65d7) border-box;
+  border: 3px solid transparent;
+  border-radius: 50px;
+  text-align: center;
+  font-size: 30px;
+}
+
+.already-attempted button:hover{
+  width: 300px;
+  color: #0f65d7;
+  background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #00eeffcb, #0f65d7) border-box;
+  border: 3px solid transparent;
+  border-radius: 50px;
+  text-align: center;
+  font-size: 30px;
+}

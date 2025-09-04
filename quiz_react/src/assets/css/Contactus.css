@@ -1,0 +1,42 @@
+.mainc {
+  background-image: linear-gradient(rgb(255, 255, 255), #0f65d7);
+  padding: 50px 0;
+}
+
+.mainc h2 {
+  background-image:linear-gradient(#00eeffcb, #0f65d7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 80px;
+}
+
+.mainc .mainbgform {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px;
+  background-image: linear-gradient(rgb(255, 255, 255), rgba(108, 76, 224, 0.29), rgba(0, 238, 255, 0.795));
+  border-radius: 20px;
+}
+
+.mainc .mainbgform .mainbody button {
+  width: 300px;
+  color: #0f65d7;
+  background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #00eeffcb, #0f65d7) border-box;
+  border: 3px solid transparent;
+  border-radius: 50px;
+  margin-top: 50px;
+  text-align: center;
+  font-size: 30px;
+}
+
+.mainc .mainbgform .mainbody .maincontent {
+  padding-top: 20px;
+  text-align: left;
+}
+
+.inputcont {
+  margin-top: 10px; /* avoid negative margins */
+}

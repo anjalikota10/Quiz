@@ -1,0 +1,100 @@
+.mainn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-image: linear-gradient(rgb(255, 255, 255), #6c4ce04a, #00eeffcb, #0f65d7);
+  height: 130px;
+  padding: 15px 50px;
+  width: 100%;
+}
+
+.name_logo {
+  display: flex;
+  align-items: center;
+}
+
+.logon img {
+  margin-left: -30px; 
+}
+
+.heading_name {
+  font-family: sans-serif;
+  color: #F9B939;
+}
+
+.logon img {
+  display: block;
+}
+
+.navn .nav_link {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+}
+
+.navn .nav_link li {
+  list-style: none;
+}
+
+.navn .nav_link a {
+  text-decoration: none;
+  color: #3300ff;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+  font-size: x-large;
+}
+
+.navn .nav_link a:hover {
+  color: rgb(190, 190, 255);
+}
+
+.nav-active {
+  color: #F9B939 !important;
+  font-weight: bold;
+  border-bottom: 2px solid #F9B939;
+}
+
+.dropdown-menu {
+  text-decoration: none; 
+  background-color: white;
+  border-radius: 12px;
+  z-index: 100;
+  border: 1px solid #ccc;
+  padding: 8px 0;
+}
+
+.dropdown-menu li {
+  cursor: pointer;
+}
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img_center{
+    background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #00eeffcb, #0f65d7) border-box;
+  border: 1px solid transparent;
+  border-radius: 10px;   
+  padding: 5px;
+  width: 80px;        
+  height: 80px;
+  /* margin-bottom: 50px; */
+}
+
+.img_center:hover{
+    background: 
+    linear-gradient(white, white) padding-box,    
+    linear-gradient(90deg, #F9B939, #F9B939) border-box;
+  border: 1px solid transparent;
+  border-radius: 10px;   
+  padding: 5px;
+  width: 80px;        
+  height: 80px;
+  /* margin-bottom: 50px; */
+}

@@ -1,0 +1,96 @@
+.main_hero {
+  height: 100vh; 
+  background-image: linear-gradient(rgb(255, 255, 255), #0f65d7);
+  width: auto; 
+} 
+
+.main_hero .code_heading { 
+  padding-top: 80px; 
+  font-family: 'Castellar', serif; 
+  color: #F9B939; 
+  font-size: 500px;
+  text-align: center; 
+} 
+
+.main_hero .img_block { 
+  display: flex; 
+  gap: 80px; 
+  padding-bottom: 150px;
+  margin-top: 150px;
+  justify-content: center;
+  text-align: center; 
+} 
+
+.main_hero .img_block .img_div { 
+  position: relative; 
+  width: 450px; 
+  overflow: hidden;
+  box-shadow: 0px 8px 25px white, 0px 0px 25px #002ac3;
+  height: 600px; 
+  border-radius: 20px; 
+} 
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+}
+
+.main_hero .img_block .img_div .name_but { 
+  opacity: 0; 
+  position: absolute; 
+  inset: 0px;
+  transition: 0.2s; 
+} 
+.main_hero .img_block .img_div .name_but .hcode_name { 
+  
+  position: absolute; 
+  left: 0; 
+  right: 0; 
+  bottom: 10px; 
+  transition: bottom 0.4s; 
+} 
+
+.main_hero .img_block .img_div .name_but .hcode_name h1 {
+  color: #F9B939;
+  font-weight: 500px; 
+  margin-bottom: 2px; 
+} 
+.main_hero .img_block .img_div .name_but .social { 
+  position: absolute; 
+  left: 0; 
+  bottom: -38px; 
+  right: 0; 
+  height: 48px; 
+  transition: bottom ease-in-out 0.4s; 
+} 
+
+.main_hero .img_block .img_div .social button { 
+  background-color: transparent; 
+  color: #0f65d7; 
+  border: 3px solid white; 
+  margin-top: -5px; 
+  width: 150px; 
+  font-size: x-large; 
+  border-radius: 30px; 
+  display: inline-block; 
+  cursor: pointer; 
+  transition: all 0.3s ease;
+} 
+.main_hero .img_block .img_div .social button:hover { 
+  background-color: transparent; 
+  color: #F9B939; 
+    /* color: #39b3f9d7;  */
+  border: 3px solid white; 
+} 
+.main_hero .img_block .img_div:hover .name_but { 
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.374) 0%, rgba(0, 0, 0, 0.429) 20%, #002ac37f 100%);
+  opacity: 1; 
+  transition: 0.4s; 
+} 
+.main_hero .img_block .img_div:hover .hcode_name {
+  bottom: 80px; 
+} 
+.main_hero .img_block .img_div:hover .social {
+  bottom: 20px; 
+}
