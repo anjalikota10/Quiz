@@ -5,20 +5,29 @@ pipeline {
         NODE_VERSION = '20.19.4'
         REMOTE_SERVER = '3.230.217.30'
         REMOTE_USER = 'ubuntu'
-        REMOTE_PATH = '/var/www/html/Quiz/quiz_react/dist'
+        REMOTE_CODE_PATH = '/var/www/html/Quiz/quiz_react'
+        REMOTE_DEPLOY_PATH = '/var/www/html/Quiz/quiz_react/dist'
     }
     
     stages {
-        stage('Cleanup Workspace') {
+        stage('Copy Code from Remote Server') {
             steps {
-                cleanWs()
-            }
-        }
-        
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-                sh 'ls -la'
+                withCredentials([usernamePassword(credentialsId: 'quiz-app-deploy-key', passwordVariable: 'SERVER_PASSWORD', usernameVariable: 'SERVER_USER')]) {
+                    sh '''
+                        # Install sshpass if not available
+                        which sshpass || sudo apt-get update && sudo apt-get install -y sshpass
+                        
+                        # Clean workspace
+                        rm -rf *
+                        
+                        # Copy source code from remote server to Jenkins
+                        sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -r $SERVER_USER@${REMOTE_SERVER}:${REMOTE_CODE_PATH}/* ./
+                        
+                        # Verify files copied
+                        echo "Files copied to Jenkins workspace:"
+                        ls -la
+                    '''
+                }
             }
         }
         
@@ -66,21 +75,15 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'quiz-app-deploy-key', passwordVariable: 'SERVER_PASSWORD', usernameVariable: 'SERVER_USER')]) {
                     sh '''
-                        # Install sshpass if not available
-                        which sshpass || sudo apt-get update && sudo apt-get install -y sshpass
-                        
-                        # Create temp directory on remote server
+                        # Copy built files back to remote server
                         sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "mkdir -p ~/temp_deploy"
-                        
-                        # Copy files to remote server
                         sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USER@${REMOTE_SERVER}:~/temp_deploy/
                         
                         # Deploy on remote server
                         sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "
-                            sudo mkdir -p ${REMOTE_PATH}
-                            sudo cp -r ~/temp_deploy/* ${REMOTE_PATH}/
-                            sudo chown -R www-data:www-data ${REMOTE_PATH}
-                            sudo chmod -R 755 ${REMOTE_PATH}
+                            sudo cp -r ~/temp_deploy/* ${REMOTE_DEPLOY_PATH}/
+                            sudo chown -R www-data:www-data ${REMOTE_DEPLOY_PATH}
+                            sudo chmod -R 755 ${REMOTE_DEPLOY_PATH}
                             rm -rf ~/temp_deploy
                             sudo nginx -t && sudo systemctl reload nginx
                         "
@@ -92,7 +95,7 @@ pipeline {
     
     post {
         success {
-            echo 'Deployment successful!'
+            echo 'Build and deployment successful!'
         }
         failure {
             echo 'Pipeline failed!'
