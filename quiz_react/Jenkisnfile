@@ -2,48 +2,100 @@ pipeline {
     agent any
     
     environment {
-        SCANNER_HOME = tool 'sonar-scanner'
+        NODE_VERSION = '20.19.4'
+        REMOTE_SERVER = '3.230.217.30'
+        REMOTE_USER = 'ubuntu'
+        REMOTE_PATH = '/var/www/html/Quiz/quiz_react/dist'
     }
     
     stages {
-        stage('Setup') {
+        stage('Cleanup Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        
+        stage('Checkout Code') {
             steps {
                 checkout scm
+                sh 'ls -la'
             }
         }
         
-        stage('Stage-Build') {
+        stage('Setup Node.js') {
             steps {
                 sh '''
-                    # Install and use Node.js 20.19.4
-                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                    export NVM_DIR="$HOME/.nvm"
+                    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                    fi
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm install ${NODE_VERSION}
+                    nvm use ${NODE_VERSION}
+                    node --version
+                    npm --version
+                '''
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh '''
                     export NVM_DIR="$HOME/.nvm"
                     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm install 20.19.4
-                    nvm use 20.19.4
-                    nvm alias default 20.19.4
-                    
-                    # Install dependencies and build
+                    nvm use ${NODE_VERSION}
+                    npm cache clean --force
                     npm install
-                    npm run build
                 '''
             }
         }
         
-        stage('Deploy') {
+        stage('Build Application') {
             steps {
                 sh '''
-                    # Deploy build files
-                    sudo cp -r dist/* /var/www/html/Quiz/quiz_react/dist/
-                    
-                    # Set permissions
-                    sudo chown -R www-data:www-data /var/www/html/Quiz/quiz_react/dist
-                    sudo chmod -R 755 /var/www/html/Quiz/quiz_react/dist
-                    
-                    # Reload nginx
-                    sudo systemctl reload nginx
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION}
+                    npm run build
+                    ls -la dist/
                 '''
             }
+        }
+        
+        stage('Deploy to Remote Server') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'quiz-app-deploy-key', passwordVariable: 'SERVER_PASSWORD', usernameVariable: 'SERVER_USER')]) {
+                    sh '''
+                        # Install sshpass if not available
+                        which sshpass || sudo apt-get update && sudo apt-get install -y sshpass
+                        
+                        # Create temp directory on remote server
+                        sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "mkdir -p ~/temp_deploy"
+                        
+                        # Copy files to remote server
+                        sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USER@${REMOTE_SERVER}:~/temp_deploy/
+                        
+                        # Deploy on remote server
+                        sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "
+                            sudo mkdir -p ${REMOTE_PATH}
+                            sudo cp -r ~/temp_deploy/* ${REMOTE_PATH}/
+                            sudo chown -R www-data:www-data ${REMOTE_PATH}
+                            sudo chmod -R 755 ${REMOTE_PATH}
+                            rm -rf ~/temp_deploy
+                            sudo nginx -t && sudo systemctl reload nginx
+                        "
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
