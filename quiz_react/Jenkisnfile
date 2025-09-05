@@ -13,9 +13,6 @@ pipeline {
         }
         
         stage('Stage-Build') {
-            when {
-                branch 'develop'
-            }
             steps {
                 sh '''
                     # Install and use Node.js 20.19.4
@@ -34,9 +31,6 @@ pipeline {
         }
         
         stage('Deploy') {
-            when {
-                branch 'develop'
-            }
             steps {
                 sh '''
                     # Deploy build files
