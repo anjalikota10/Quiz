@@ -9,42 +9,44 @@ pipeline {
         stage('Setup') {
             steps {
                 checkout scm
+            }
+        }
+        
+        stage('Stage-Build') {
+            when {
+                branch 'develop'
+            }
+            steps {
                 sh '''
-                    npm --version
-                    node --version
+                    # Install and use Node.js 20.19.4
+                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm install 20.19.4
+                    nvm use 20.19.4
+                    nvm alias default 20.19.4
+                    
+                    # Install dependencies and build
+                    npm install
+                    npm run build
                 '''
             }
         }
         
-//       stage('SonarQube Analysis') {
- //           when {
-  //              anyOf {
-   //                 branch 'develop'
-    //            }
-     //       }
-      //      steps {
-       //         withSonarQubeEnv('SonarQube') {
-        //            sh '''
-         //               ${SCANNER_HOME}/bin/sonar-scanner \
-          //                  -Dsonar.projectKey=quiz-react-frontend \
-           //                 -Dsonar.projectName="Quiz React Frontend" \
-            //                -Dsonar.sources=src
-             //       '''
-              //  }
-               // waitForQualityGate abortPipeline: false
-           // }
-       // }
-        
         stage('Deploy') {
             when {
-                anyOf {
-                    branch 'develop'
-                }
+                branch 'develop'
             }
             steps {
                 sh '''
+                    # Deploy build files
+                    sudo cp -r dist/* /var/www/html/Quiz/quiz_react/dist/
+                    
+                    # Set permissions
                     sudo chown -R www-data:www-data /var/www/html/Quiz/quiz_react/dist
                     sudo chmod -R 755 /var/www/html/Quiz/quiz_react/dist
+                    
+                    # Reload nginx
                     sudo systemctl reload nginx
                 '''
             }
