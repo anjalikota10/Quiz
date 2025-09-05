@@ -1,104 +1,97 @@
+// Jenkinsfile for React (Vite + Tailwind) project
 pipeline {
     agent any
-    
     environment {
-        NODE_VERSION = '20.19.4'
-        REMOTE_SERVER = '3.230.217.30'
-        REMOTE_USER = 'ubuntu'
-        REMOTE_CODE_PATH = '/var/www/html/Quiz/quiz_react'
-        REMOTE_DEPLOY_PATH = '/var/www/html/Quiz/quiz_react/dist'
+        COMMITDATE = ""
     }
-    
+
     stages {
-        stage('Copy Code from Remote Server') {
+        stage('Setup') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'quiz-app-deploy-key', passwordVariable: 'SERVER_PASSWORD', usernameVariable: 'SERVER_USER')]) {
-                    sh '''
-                        # Install sshpass if not available
-                        which sshpass || sudo apt-get update && sudo apt-get install -y sshpass
-                        
-                        # Clean workspace
-                        rm -rf *
-                        
-                        # Copy source code from remote server to Jenkins
-                        sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -r $SERVER_USER@${REMOTE_SERVER}:${REMOTE_CODE_PATH}/* ./
-                        
-                        # Verify files copied
-                        echo "Files copied to Jenkins workspace:"
-                        ls -la
-                    '''
+                notifyBuild('STARTED')
+                script {
+                    COMMITDATE = sh(returnStdout: true, script: "git show -s --format=%ci ${GIT_COMMIT}").trim()
                 }
+                echo "Commit Date: ${COMMITDATE}"
+                sh "git rev-parse --abbrev-ref HEAD"
+                echo "Branch: ${env.GIT_BRANCH}"
             }
         }
-        
-        stage('Setup Node.js') {
-            steps {
-                sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-                    fi
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm install ${NODE_VERSION}
-                    nvm use ${NODE_VERSION}
-                    node --version
-                    npm --version
-                '''
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm use ${NODE_VERSION}
-                    npm cache clean --force
-                    npm install
-                '''
-            }
-        }
-        
-        stage('Build Application') {
-            steps {
-                sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm use ${NODE_VERSION}
-                    npm run build
-                    ls -la dist/
-                '''
-            }
-        }
-        
-        stage('Deploy to Remote Server') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'quiz-app-deploy-key', passwordVariable: 'SERVER_PASSWORD', usernameVariable: 'SERVER_USER')]) {
-                    sh '''
-                        # Copy built files back to remote server
-                        sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "mkdir -p ~/temp_deploy"
-                        sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USER@${REMOTE_SERVER}:~/temp_deploy/
-                        
-                        # Deploy on remote server
-                        sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no $SERVER_USER@${REMOTE_SERVER} "
-                            sudo cp -r ~/temp_deploy/* ${REMOTE_DEPLOY_PATH}/
-                            sudo chown -R www-data:www-data ${REMOTE_DEPLOY_PATH}
-                            sudo chmod -R 755 ${REMOTE_DEPLOY_PATH}
-                            rm -rf ~/temp_deploy
-                            sudo nginx -t && sudo systemctl reload nginx
-                        "
-                    '''
-                }
-            }
-        }
-    }
-    
-    post {
-        success {
-            echo 'Build and deployment successful!'
-        }
-        failure {
-            echo 'Pipeline failed!'
+
+        stage('Stage-Build') {
+    when { expression { env.GIT_BRANCH == 'origin/develop' } }
+    steps {
+//        withCredentials([file(credentialsId: 'ENV_FILE', variable: 'ENV_FILE')]) {
+            sh '''
+              set -e
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+              export NVM_DIR="$HOME/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+              nvm install 20.18.0
+              nvm use 20.18.0
+
+              echo "Injecting .env file..."
+              cp $ENV_FILE .env
+              ls -lah .env   # just for debug, remove in production
+
+              echo "Installing dependencies..."
+              if [ -f package-lock.json ]; then
+                npm ci
+              else
+                npm install
+              fi
+
+              echo "Building React app..."
+              npm run build
+            '''
         }
     }
 }
+
+
+        stage('Stage-Deploy') {
+            when { expression { env.GIT_BRANCH == 'origin/develop' }
+            }
+            steps {
+                sh '''
+                  set -e
+                  echo ">>> Checking SSH connectivity..."
+                  ssh -o StrictHostKeyChecking=no ubuntu@3.230.217.30 'echo SSH OK'
+
+                  echo ">>> Deploying dist/ folder to remote server..."
+                  rsync -avz --delete ./dist/ ubuntu@3.230.217.30:/var/www/html/Quiz/quiz_react/
+                  
+                  echo ">>> Setting permissions on remote server..."
+                  ssh -o StrictHostKeyChecking=no ubuntu@3.230.217.30 \
+                    "sudo chown -R www-data:www-data /var/www/html/Quiz/quiz_react && \
+                    sudo chmod -R 755 /var/www/html/Quiz/quiz_react"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}
+
+def notifyBuild(String buildStatus = 'STARTED') {
+    buildStatus = buildStatus ?: 'SUCCESSFUL'
+    def colorCode = '#FF0000'
+    def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+
+    if (buildStatus == 'STARTED') {
+        colorCode = '#FFFF00'
+    } else if (buildStatus == 'SUCCESS') {
+        colorCode = '#00FF00'
+    } else {
+        colorCode = '#FF0000'
+    }
+
+    echo "Slack notify: ${summary}"
+    // slackSend(color: colorCode, message: summary)
+}
+
