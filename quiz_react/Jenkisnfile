@@ -1,11 +1,9 @@
-// Jenkinsfile for React (Vite + Tailwind) project
 pipeline {
     agent any
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         COMMITDATE = ""
-        // Add your target EC2 instance details here
-        TARGET_SERVER = "ubuntu@3.230.217.30"  // e.g., "ubuntu@54.123.456.789"
+        TARGET_SERVER = "ubuntu@3.230.217.30"
         DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
     }
     stages {
@@ -20,10 +18,11 @@ pipeline {
                 echo "Branch: ${env.GIT_BRANCH}"
             }
         }
+
         stage('Stage-Build') {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
-                dir('quiz_react') {   // 👈 go inside quiz_react folder
+                dir('quiz_react') {
                     sh '''
                       set -e
                       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
@@ -31,51 +30,53 @@ pipeline {
                       [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                       nvm install 20.19.4
                       nvm use 20.19.4
-                  
+
                       echo "Installing dependencies..."
                       if [ -f package-lock.json ]; then
                         npm ci
                       else
                         npm install
                       fi
-                  
+
                       echo "Building React app..."
                       npm run build
-                   '''
+                    '''
+                }
             }
         }
+
         stage('Stage-Deploy') {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
                 dir('quiz_react') {
-                sh '''
-                  set -e
-                  echo ">>> Checking SSH connectivity to target server..."
-                  ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
-                  
-                  echo ">>> Deploying dist/ folder to remote server..."
-                  rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
-                  
-                  echo ">>> Setting permissions on remote server..."
-                  ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
-                    "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
-                    sudo chmod -R 755 ${DEPLOY_PATH}"
-                '''
+                    sh '''
+                      set -e
+                      echo ">>> Checking SSH connectivity to target server..."
+                      ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
+
+                      echo ">>> Deploying dist/ folder to remote server..."
+                      rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
+
+                      echo ">>> Setting permissions on remote server..."
+                      ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
+                        "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
+                        sudo chmod -R 755 ${DEPLOY_PATH}"
+                    '''
+                }
             }
         }
     }
+
     post {
         always {
-            // Archive dist folder as artifact (optional)
             script {
-                if (fileExists('dist')) {
-                    archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+                if (fileExists('quiz_react/dist')) {   // 👈 FIXED path
+                    archiveArtifacts artifacts: 'quiz_react/dist/**/*', fingerprint: true
                     echo "Dist folder archived as build artifact"
                 }
             }
         }
         cleanup {
-            // Only clean up if build was successful and dist is preserved
             echo "Pipeline completed - workspace preserved for debugging"
         }
     }
