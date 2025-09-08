@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        SCANNER_HOME = tool 'sonar-scanner'
         COMMITDATE = ""
         TARGET_SERVER = "ubuntu@3.230.217.30"
         DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
