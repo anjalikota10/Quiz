@@ -3,8 +3,10 @@ pipeline {
     agent any
     environment {
         COMMITDATE = ""
+        // Add your target EC2 instance details here
+        TARGET_SERVER = "ubuntu@3.230.217.30"  
+        DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
     }
-
     stages {
         stage('Setup') {
             steps {
@@ -17,63 +19,57 @@ pipeline {
                 echo "Branch: ${env.GIT_BRANCH}"
             }
         }
-
         stage('Stage-Build') {
-    when { expression { env.GIT_BRANCH == 'origin/develop' } }
-    steps {
-//        withCredentials([file(credentialsId: 'ENV_FILE', variable: 'ENV_FILE')]) {
-            sh '''
-              set -e
-              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-              nvm install 20.18.0
-              nvm use 20.18.0
-
-              echo "Injecting .env file..."
-              cp $ENV_FILE .env
-              ls -lah .env   # just for debug, remove in production
-
-              echo "Installing dependencies..."
-              if [ -f package-lock.json ]; then
-                npm ci
-              else
-                npm install
-              fi
-
-              echo "Building React app..."
-              npm run build
-            '''
-        }
-    }
-}
-
-
-        stage('Stage-Deploy') {
-            when { expression { env.GIT_BRANCH == 'origin/develop' }
-            }
+            when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
                 sh '''
                   set -e
-                  echo ">>> Checking SSH connectivity..."
-                  ssh -o StrictHostKeyChecking=no ubuntu@3.230.217.30 'echo SSH OK'
-
+                  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                  export NVM_DIR="$HOME/.nvm"
+                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                  nvm install 20.19.4
+                  nvm use 20.19.4
+                  
+                  echo "Installing dependencies..."
+                  if [ -f package-lock.json ]; then
+                    npm ci
+                  else
+                    npm install
+                  fi
+                  
+                  echo "Building React app..."
+                  npm run build
+                '''
+            }
+        }
+        stage('Stage-Deploy') {
+            when { expression { env.GIT_BRANCH == 'origin/develop' } }
+            steps {
+                sh '''
+                  set -e
+                  echo ">>> Checking SSH connectivity to target server..."
+                  ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
+                  
                   echo ">>> Deploying dist/ folder to remote server..."
-                  rsync -avz --delete ./dist/ ubuntu@3.230.217.30:/var/www/html/Quiz/quiz_react/
+                  rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
                   
                   echo ">>> Setting permissions on remote server..."
-                  ssh -o StrictHostKeyChecking=no ubuntu@3.230.217.30 \
-                    "sudo chown -R www-data:www-data /var/www/html/Quiz/quiz_react && \
-                    sudo chmod -R 755 /var/www/html/Quiz/quiz_react"
+                  ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
+                    "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
+                    sudo chmod -R 755 ${DEPLOY_PATH}"
                 '''
             }
         }
     }
-
     post {
         always {
-            deleteDir()
+            // Clean up workspace but preserve dist folder
+            sh '''
+              echo "Cleaning up workspace (preserving dist folder)..."
+              find . -maxdepth 1 -not -name 'dist' -not -name '.' -exec rm -rf {} + 2>/dev/null || true
+              find . -name 'node_modules' -type d -exec rm -rf {} + 2>/dev/null || true
+              find . -name '.git' -type d -exec rm -rf {} + 2>/dev/null || true
+            '''
         }
     }
 }
@@ -82,7 +78,6 @@ def notifyBuild(String buildStatus = 'STARTED') {
     buildStatus = buildStatus ?: 'SUCCESSFUL'
     def colorCode = '#FF0000'
     def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
-
     if (buildStatus == 'STARTED') {
         colorCode = '#FFFF00'
     } else if (buildStatus == 'SUCCESS') {
@@ -90,8 +85,6 @@ def notifyBuild(String buildStatus = 'STARTED') {
     } else {
         colorCode = '#FF0000'
     }
-
     echo "Slack notify: ${summary}"
     // slackSend(color: colorCode, message: summary)
 }
-
