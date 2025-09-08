@@ -23,24 +23,25 @@ pipeline {
         stage('Stage-Build') {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
-                sh '''
-                  set -e
-                  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-                  export NVM_DIR="$HOME/.nvm"
-                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                  nvm install 20.19.4
-                  nvm use 20.19.4
+                dir('quiz_react') {   // 👈 go inside quiz_react folder
+                    sh '''
+                      set -e
+                      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                      export NVM_DIR="$HOME/.nvm"
+                      [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                      nvm install 20.19.4
+                      nvm use 20.19.4
                   
-                  echo "Installing dependencies..."
-                  if [ -f package-lock.json ]; then
-                    npm ci
-                  else
-                    npm install
-                  fi
+                      echo "Installing dependencies..."
+                      if [ -f package-lock.json ]; then
+                        npm ci
+                      else
+                        npm install
+                      fi
                   
-                  echo "Building React app..."
-                  npm run build
-                '''
+                      echo "Building React app..."
+                      npm run build
+                   '''
             }
         }
         stage('Stage-Deploy') {
