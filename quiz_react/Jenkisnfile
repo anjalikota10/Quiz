@@ -1,21 +1,23 @@
 pipeline {
     agent any
+
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         COMMITDATE = ""
         TARGET_SERVER = "ubuntu@3.230.217.30"
         DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
     }
+
     stages {
         stage('Setup') {
             steps {
-                notifyBuild('STARTED')
                 script {
+                    notifyBuild('STARTED')
                     COMMITDATE = sh(returnStdout: true, script: "git show -s --format=%ci ${GIT_COMMIT}").trim()
+                    echo "Commit Date: ${COMMITDATE}"
+                    sh "git rev-parse --abbrev-ref HEAD"
+                    echo "Branch: ${env.GIT_BRANCH}"
                 }
-                echo "Commit Date: ${COMMITDATE}"
-                sh "git rev-parse --abbrev-ref HEAD"
-                echo "Branch: ${env.GIT_BRANCH}"
             }
         }
 
@@ -46,30 +48,33 @@ pipeline {
         }
 
         stage('Stage-Deploy') {
-           when { expression { env.GIT_BRANCH == 'origin/develop' } }
-           steps {
-               sshagent(['JENKINS_CREDENTIAL_ID']) {
-                   sh '''
-                       echo ">>> Checking SSH connectivity to target server..."
-                       ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
+            when { expression { env.GIT_BRANCH == 'origin/develop' } }
+            steps {
+                dir('quiz_react') {
+                    sshagent(['JENKINS_CREDENTIAL_ID']) {   // 👈 use Jenkins SSH key
+                        sh '''
+                          set -e
+                          echo ">>> Checking SSH connectivity to target server..."
+                          ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
 
-                       echo ">>> Deploying dist/ folder to remote server..."
-                       rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
+                          echo ">>> Deploying dist/ folder to remote server..."
+                          rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
 
-                       echo ">>> Setting permissions on remote server..."
-                       ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
-                         "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
-                         sudo chmod -R 755 ${DEPLOY_PATH}"
-                  '''
+                          echo ">>> Setting permissions on remote server..."
+                          ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
+                            "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
+                             sudo chmod -R 755 ${DEPLOY_PATH}"
+                        '''
+                    }
+                }
+            }
         }
     }
-}
-
 
     post {
         always {
             script {
-                if (fileExists('quiz_react/dist')) {   // 👈 FIXED path
+                if (fileExists('quiz_react/dist')) {
                     archiveArtifacts artifacts: 'quiz_react/dist/**/*', fingerprint: true
                     echo "Dist folder archived as build artifact"
                 }
@@ -85,13 +90,13 @@ def notifyBuild(String buildStatus = 'STARTED') {
     buildStatus = buildStatus ?: 'SUCCESSFUL'
     def colorCode = '#FF0000'
     def summary = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+
     if (buildStatus == 'STARTED') {
         colorCode = '#FFFF00'
     } else if (buildStatus == 'SUCCESS') {
         colorCode = '#00FF00'
-    } else {
-        colorCode = '#FF0000'
     }
+
     echo "Slack notify: ${summary}"
     // slackSend(color: colorCode, message: summary)
 }
