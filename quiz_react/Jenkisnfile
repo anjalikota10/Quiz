@@ -2,9 +2,10 @@
 pipeline {
     agent any
     environment {
+        SCANNER_HOME = tool 'sonar-scanner'
         COMMITDATE = ""
         // Add your target EC2 instance details here
-        TARGET_SERVER = "ubuntu@3.230.217.30"  
+        TARGET_SERVER = "ubuntu@3.230.217.30"  // e.g., "ubuntu@54.123.456.789"
         DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
     }
     stages {
@@ -63,13 +64,17 @@ pipeline {
     }
     post {
         always {
-            // Clean up workspace but preserve dist folder
-            sh '''
-              echo "Cleaning up workspace (preserving dist folder)..."
-              find . -maxdepth 1 -not -name 'dist' -not -name '.' -exec rm -rf {} + 2>/dev/null || true
-              find . -name 'node_modules' -type d -exec rm -rf {} + 2>/dev/null || true
-              find . -name '.git' -type d -exec rm -rf {} + 2>/dev/null || true
-            '''
+            // Archive dist folder as artifact (optional)
+            script {
+                if (fileExists('dist')) {
+                    archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+                    echo "Dist folder archived as build artifact"
+                }
+            }
+        }
+        cleanup {
+            // Only clean up if build was successful and dist is preserved
+            echo "Pipeline completed - workspace preserved for debugging"
         }
     }
 }
