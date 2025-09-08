@@ -50,7 +50,7 @@ pipeline {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
                 dir('quiz_react') {
-                    sshagent(['JENKINS_CREDENTIAL_ID']) {   // 👈 use Jenkins SSH key
+                    sshagent(['	remote-server-ssh']) {   // 👈 use Jenkins SSH key
                         sh '''
                           set -e
                           echo ">>> Checking SSH connectivity to target server..."
