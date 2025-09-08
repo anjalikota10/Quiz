@@ -46,26 +46,25 @@ pipeline {
         }
 
         stage('Stage-Deploy') {
-            when { expression { env.GIT_BRANCH == 'origin/develop' } }
-            steps {
-                dir('quiz_react') {
-                    sh '''
-                      set -e
-                      echo ">>> Checking SSH connectivity to target server..."
-                      ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
+           when { expression { env.GIT_BRANCH == 'origin/develop' } }
+           steps {
+               sshagent(['JENKINS_CREDENTIAL_ID']) {
+                   sh '''
+                       echo ">>> Checking SSH connectivity to target server..."
+                       ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
 
-                      echo ">>> Deploying dist/ folder to remote server..."
-                      rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
+                       echo ">>> Deploying dist/ folder to remote server..."
+                       rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
 
-                      echo ">>> Setting permissions on remote server..."
-                      ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
-                        "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
-                        sudo chmod -R 755 ${DEPLOY_PATH}"
-                    '''
-                }
-            }
+                       echo ">>> Setting permissions on remote server..."
+                       ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
+                         "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
+                         sudo chmod -R 755 ${DEPLOY_PATH}"
+                  '''
         }
     }
+}
+
 
     post {
         always {
