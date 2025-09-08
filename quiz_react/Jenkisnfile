@@ -47,6 +47,7 @@ pipeline {
         stage('Stage-Deploy') {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
+                dir('quiz_react') {
                 sh '''
                   set -e
                   echo ">>> Checking SSH connectivity to target server..."
