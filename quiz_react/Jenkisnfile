@@ -5,6 +5,7 @@ pipeline {
         COMMITDATE = ""
         TARGET_SERVER = "ubuntu@3.230.217.30"
         DEPLOY_PATH = "/var/www/html/Quiz/quiz_react/"
+        TMP_DEPLOY_PATH = "/tmp/quiz_tmp"
     }
 
     stages {
@@ -26,20 +27,21 @@ pipeline {
                 dir('quiz_react') {
                     sh '''
                       set -e
+                      echo ">>> Installing NVM..."
                       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
                       export NVM_DIR="$HOME/.nvm"
                       [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                       nvm install 20.19.4
                       nvm use 20.19.4
 
-                      echo "Installing dependencies..."
+                      echo ">>> Installing dependencies..."
                       if [ -f package-lock.json ]; then
                         npm ci
                       else
                         npm install
                       fi
 
-                      echo "Building React app..."
+                      echo ">>> Building React app..."
                       npm run build
                     '''
                 }
@@ -50,19 +52,21 @@ pipeline {
             when { expression { env.GIT_BRANCH == 'origin/develop' } }
             steps {
                 dir('quiz_react') {
-                    sshagent(['jenkins-ssh-key']) {   // 👈 use Jenkins SSH key
+                    sshagent(['jenkins-ssh-key']) {
                         sh '''
                           set -e
                           echo ">>> Checking SSH connectivity to target server..."
                           ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} 'echo SSH OK'
 
-                          echo ">>> Deploying dist/ folder to remote server..."
-                          rsync -avz --delete ./dist/ ${TARGET_SERVER}:${DEPLOY_PATH}
+                          echo ">>> Deploying to temporary folder on remote server..."
+                          rsync -avz --delete ./dist/ ${TARGET_SERVER}:${TMP_DEPLOY_PATH}
 
-                          echo ">>> Setting permissions on remote server..."
+                          echo ">>> Moving files to final location with sudo..."
                           ssh -o StrictHostKeyChecking=no ${TARGET_SERVER} \
-                            "sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
-                             sudo chmod -R 755 ${DEPLOY_PATH}"
+                            "sudo rsync -avz --delete ${TMP_DEPLOY_PATH}/ ${DEPLOY_PATH} && \
+                             sudo chown -R www-data:www-data ${DEPLOY_PATH} && \
+                             sudo chmod -R 755 ${DEPLOY_PATH} && \
+                             rm -rf ${TMP_DEPLOY_PATH}"
                         '''
                     }
                 }
