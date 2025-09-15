@@ -16,6 +16,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Welcome to Node + MySQL API');
 });
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 app.use('/api/contact',contactRoutes) 
 app.use('/api/login', authRoutes) 
 app.use('/api/course', courseRoutes) 
